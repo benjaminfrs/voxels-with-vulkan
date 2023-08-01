@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 
+#define VK_ENABLE_BETA_EXTENSIONS //Include provisional headers
 #include <vulkan/vulkan.h> // also assume core+WSI commands are loaded
 static_assert( VK_HEADER_VERSION >= REQUIRED_HEADER_VERSION, "Update your SDK! This app is written against Vulkan header version " STRINGIZE(REQUIRED_HEADER_VERSION) "." );
 
@@ -270,7 +271,11 @@ int helloTriangle() try{
 	const auto platformSurfaceExtension = getPlatformSurfaceExtensionName();
 	vector<const char*> requestedInstanceExtensions = {
 		VK_KHR_SURFACE_EXTENSION_NAME,
-		platformSurfaceExtension.c_str()
+		platformSurfaceExtension.c_str(),
+#ifdef __APPLE__
+		VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+		VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
+#endif
 	};
 
 #if VULKAN_VALIDATION
@@ -333,7 +338,11 @@ int helloTriangle() try{
 	std::tie( graphicsQueueFamily, presentQueueFamily ) = getQueueFamilies( physicalDevice, surface );
 
 	const VkPhysicalDeviceFeatures features = {}; // don't need any special feature for this demo
+#ifdef __APPLE__ //
+	const vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset" };
+#else
 	const vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+#endif
 
 	const VkDevice device = initDevice( physicalDevice, features, graphicsQueueFamily, presentQueueFamily, requestedLayers, deviceExtensions );
 	const VkQueue graphicsQueue = getQueue( device, graphicsQueueFamily, 0 );
@@ -738,7 +747,11 @@ VkInstance initInstance( const vector<const char*>& layers, const vector<const c
 #else
 		nullptr, // pNext
 #endif
-		0, // flags - reserved for future use
+#ifdef __APPLE__
+		0 | VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR, // flags - reserved for future use
+#else
+    0, // default to no flags for conformant vulkan platforms
+#endif
 		&appInfo,
 		static_cast<uint32_t>( layers.size() ),
 		layers.data(),
