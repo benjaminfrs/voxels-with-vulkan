@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.5.1 )
-project( HelloTriangle )
+project( HelloVoxel )
 
 set( TODO ON CACHE BOOL "Enable compiletime TODO messages" )
 
@@ -47,7 +47,7 @@ add_custom_command(
 )
 
 add_custom_target(
-	HelloTriangle_shaders
+	HelloVoxel_shaders
 	COMMENT "Compiling shaders"
 	DEPENDS ${VERT_SHADER_INCLUDE} ${FRAG_SHADER_INCLUDE}
 )
@@ -68,31 +68,33 @@ if( ${WSI} STREQUAL "USE_PLATFORM_GLFW" )
 	add_subdirectory( external/glfw )
 endif()
 
-# HelloTriangle binary
-set_property( DIRECTORY PROPERTY VS_STARTUP_PROJECT HelloTriangle )
-file(GLOB SOURCE_HEADERS "src/*.h")
-add_executable( HelloTriangle WIN32 src/HelloTriangle.cpp ${SOURCE_HEADERS} )
-add_dependencies( HelloTriangle HelloTriangle_shaders )
+include_directories("${CMAKE_SOURCE_DIR}src/" "${CMAKE_SOURCE_DIR}/src/WSI")
+set_property( DIRECTORY PROPERTY VS_STARTUP_PROJECT HelloVoxel )
+
+add_executable( HelloVoxel
+  src/HelloVoxel.cpp
+)
+add_dependencies( HelloVoxel HelloVoxel_shaders)
 
 if( NOT TODO )
 	add_definitions( -DNO_TODO )
 endif()
 
 if( MSVC )
-	target_compile_definitions( HelloTriangle PRIVATE $<$<CONFIG:Debug>:_CONSOLE> )
-	set_target_properties( HelloTriangle PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE" )
+	target_compile_definitions( HelloVoxel PRIVATE $<$<CONFIG:Debug>:_CONSOLE> )
+	set_target_properties( HelloVoxel PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE" )
 endif()
 
 if("${CMAKE_VERSION}" VERSION_LESS 3.8.2)
 	set_target_properties(
-		HelloTriangle
+		HelloVoxel
 		PROPERTIES
-			CXX_STANDARD 14
+			CXX_STANDARD 17
 			CXX_STANDARD_REQUIRED YES
 			CXX_EXTENSIONS NO
 	)
 else()
-	target_compile_features( HelloTriangle PRIVATE cxx_std_14 )
+	target_compile_features( HelloVoxel PRIVATE cxx_std_17 )
 endif()
 
 find_path(
@@ -101,7 +103,7 @@ find_path(
 	NO_DEFAULT_PATH
 )
 message( "Vulkan include dir: " ${VULKAN_INCLUDE} )
-include_directories( "${VULKAN_INCLUDE}" "src/" )
+include_directories( "${VULKAN_INCLUDE}" "src/" "${CMAKE_SOURCE_DIR}/src/WSI")
 
 if( CYGWIN )
 	set( CMAKE_FIND_LIBRARY_PREFIXES "" )
@@ -135,4 +137,21 @@ elseif( ${WSI} STREQUAL "VK_USE_PLATFORM_WAYLAND_KHR" )
 endif()
 add_definitions( -D${WSI} )
 
-target_link_libraries( HelloTriangle "${VULKAN_LIBRARY}" "${WSI_LIBS}" )
+link_directories("${CMAKE_SOURCE_DIR}src/" "${CMAKE_SOURCE_DIR}/src/WSI")
+add_library(VulkanImplLib STATIC
+  src/VulkanImpl.cpp
+  src/ExtensionLoader.cpp
+  src/ErrorHandling.cpp
+  src/VulkanIntrospection.cpp
+  src/WSI/Glfw.cpp
+)
+target_link_libraries(VulkanImplLib "${VULKAN_LIBRARY}" "${WSI_LIBS}")
+
+set_target_properties( VulkanImplLib
+  PROPERTIES
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED YES
+  CXX_EXTENSIONS NO
+)
+
+target_link_libraries( HelloVoxel VulkanImplLib )
