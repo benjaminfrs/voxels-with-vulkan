@@ -1,3 +1,18 @@
+-------------------------
+I (Benjamin Simons) have forked and modified this repository in order
+to learn and work with the Vulkan API. My changes accomplish a more
+modular design. The end goal is to develop a cross platform application
+that supports physics simulations being run on many voxels or particles
+where the bulk of the computation will be performed in parallel on the GPU.
+Vulkan was chosen due to the ability to target multiple platforms and
+hardware configurations while being able to issue detailed instructions 
+and have finely tuned control over the GPU. 
+
+The project also demonstrates experience with C++ 11/14/17 and using Cmake.
+
+https://github.com/benjaminfrs/voxels-with-vulkan
+
+
 Hello Triangle Vulkan demo
 =========================
 
