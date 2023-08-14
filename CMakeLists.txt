@@ -144,6 +144,7 @@ add_library(VulkanImplLib STATIC
   src/ErrorHandling.cpp
   src/VulkanIntrospection.cpp
   src/WSI/Glfw.cpp
+  src/VulkanValidation.cpp
 )
 target_link_libraries(VulkanImplLib "${VULKAN_LIBRARY}" "${WSI_LIBS}")
 

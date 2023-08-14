@@ -37,6 +37,7 @@ static_assert( VK_HEADER_VERSION >= REQUIRED_HEADER_VERSION, "Update your SDK! T
 
 #include "VulkanConfig.h"
 #include "VulkanImpl.h"
+#include <VulkanValidation.h>
 
 
 using std::exception;
@@ -58,82 +59,9 @@ int helloTriangle() try{
 		{ /*lb*/ { {-0.5f * triangleSize,  sqrtf( 3.0f ) * 0.25f * triangleSize} }, /*B*/{ {0.0f, 0.0f, 1.0f} }  }
 	};
 
-	const auto supportedLayers = enumerate<VkInstance, VkLayerProperties>();
-	vector<const char*> requestedLayers;
-
-#if VULKAN_VALIDATION
-	if(  isLayerSupported( "VK_LAYER_KHRONOS_validation", supportedLayers )  ) requestedLayers.push_back( "VK_LAYER_KHRONOS_validation" );
-	else throw "VULKAN_VALIDATION is enabled but VK_LAYER_KHRONOS_validation layers are not supported!";
-
-	if( VulkanConfig::useAssistantLayer ){
-		if(  isLayerSupported( "VK_LAYER_LUNARG_assistant_layer", supportedLayers )  ) requestedLayers.push_back( "VK_LAYER_LUNARG_assistant_layer" );
-		else throw "VULKAN_VALIDATION is enabled but VK_LAYER_LUNARG_assistant_layer layer is not supported!";
-	}
-#endif
-
-	if( VulkanConfig::fpsCounter ) requestedLayers.push_back( "VK_LAYER_LUNARG_monitor" );
-	requestedLayers = checkInstanceLayerSupport( requestedLayers, supportedLayers );
-
-
-	const auto supportedInstanceExtensions = getSupportedInstanceExtensions( requestedLayers );
-	const auto platformSurfaceExtension = getPlatformSurfaceExtensionName();
-	vector<const char*> requestedInstanceExtensions = {
-		VK_KHR_SURFACE_EXTENSION_NAME,
-		platformSurfaceExtension.c_str(),
-#ifdef __APPLE__
-		VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-		VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
-#endif
-	};
-
-#if VULKAN_VALIDATION
-	DebugObjectType debugExtensionTag;
-	if(  isExtensionSupported( VK_EXT_DEBUG_UTILS_EXTENSION_NAME, supportedInstanceExtensions )  ){
-		debugExtensionTag = DebugObjectType::debugUtils;
-		requestedInstanceExtensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
-	}
-	else if(  isExtensionSupported( VK_EXT_DEBUG_REPORT_EXTENSION_NAME, supportedInstanceExtensions )  ){
-		debugExtensionTag = DebugObjectType::debugReport;
-		requestedInstanceExtensions.push_back( VK_EXT_DEBUG_REPORT_EXTENSION_NAME );
-	}
-	else throw "VULKAN_VALIDATION is enabled but neither VK_EXT_debug_utils nor VK_EXT_debug_report extension is supported!";
-#endif
-
-	checkExtensionSupport( requestedInstanceExtensions, supportedInstanceExtensions );
-
-
-	const VkInstance instance = initInstance( requestedLayers, requestedInstanceExtensions );
-
-#if VULKAN_VALIDATION
-	const auto debugHandle = initDebug( instance, debugExtensionTag, VulkanConfig::debugSeverity, VulkanConfig::debugType );
-
-	const int32_t uncoded = 0;
-	const char* introMsg = "Validation Layers are enabled!";
-	if( debugExtensionTag == DebugObjectType::debugUtils ){
-		VkDebugUtilsObjectNameInfoEXT object = {
-			VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
-			nullptr, // pNext
-			VK_OBJECT_TYPE_INSTANCE,
-			handleToUint64(instance),
-			"instance"
-		};
-		const VkDebugUtilsMessengerCallbackDataEXT dumcd = {
-			VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT,
-			nullptr, // pNext
-			0, // flags
-			"VULKAN_VALIDATION", // VUID
-			0, // VUID hash
-			introMsg,
-			0, nullptr, 0, nullptr,
-			1, &object
-		};
-		vkSubmitDebugUtilsMessageEXT( instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT, VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT, &dumcd );
-	}
-	else if( debugExtensionTag == DebugObjectType::debugReport ){
-		vkDebugReportMessageEXT( instance, VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT, VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT, (uint64_t)instance, __LINE__, uncoded, "Application", introMsg );
-	}
-#endif
-
+  VulkanManager manager;
+  const VkInstance instance = manager.getVkInstance();
+  const DebugObjectVariant debugHandle = manager.getDebugHandle();
 
 	const PlatformWindow window = initWindow( VulkanConfig::appName, VulkanConfig::initialWindowWidth, VulkanConfig::initialWindowHeight );
 	const VkSurfaceKHR surface = initSurface( instance, window );
@@ -152,7 +80,7 @@ int helloTriangle() try{
 	const vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 #endif
 
-	const VkDevice device = initDevice( physicalDevice, features, graphicsQueueFamily, presentQueueFamily, requestedLayers, deviceExtensions );
+	const VkDevice device = initDevice( physicalDevice, features, graphicsQueueFamily, presentQueueFamily, manager.getRequestedLayers(), deviceExtensions );
 	const VkQueue graphicsQueue = getQueue( device, graphicsQueueFamily, 0 );
 	const VkQueue presentQueue = getQueue( device, presentQueueFamily, 0 );
 
