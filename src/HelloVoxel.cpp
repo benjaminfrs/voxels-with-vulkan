@@ -287,43 +287,24 @@ int helloTriangle() try{
 	// proper Vulkan cleanup
 	VkResult errorCode = vkDeviceWaitIdle( device ); RESULT_HANDLER( errorCode, "vkDeviceWaitIdle" );
 
-
-	// kill swapchain
-	killSemaphores( device, renderDoneSs );
-	// imageReadySs killed after the swapchain
-
-	// command buffers killed with pool
-
-	killPipeline( device, pipeline );
-
-	killFramebuffers( device, framebuffers );
-
-	killSwapchainImageViews( device, swapchainImageViews );
-	killSwapchain( device, swapchain );
-
-	// per current spec, we can't really be sure these are not used :/ at least kill them after the swapchain
-	// https://github.com/KhronosGroup/Vulkan-Docs/issues/152
-	killSemaphores( device, imageReadySs );
-
-
-	// kill vulkan
-	killFences( device, submissionFences );
-
-	killCommandPool( device,  commandPool );
-
-	killMemory( device, vertexBufferMemory );
-	killBuffer( device, vertexBuffer );
-
-	killPipelineLayout( device, pipelineLayout );
-	killShaderModule( device, fragmentShader );
-	killShaderModule( device, vertexShader );
-
-	killRenderPass( device, renderPass );
-
-	killDevice( device );
-
-	killSurface( instance, surface );
-	killWindow( window );
+  cleanupVulkan(device,
+      instance,
+      renderDoneSs,
+      pipeline,
+      framebuffers,
+      swapchainImageViews,
+      swapchain,
+      imageReadySs,
+      submissionFences,
+      commandPool,
+      vertexBufferMemory,
+      vertexBuffer,
+      pipelineLayout,
+      fragmentShader,
+      vertexShader,
+      renderPass,
+      surface,
+      window);
 
 #if VULKAN_VALIDATION
 	killDebug( instance, debugHandle );

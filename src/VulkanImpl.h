@@ -8,6 +8,7 @@ using std::vector;
 
 #include "Vertex.h"
 #include "ErrorHandling.h"
+#include "Wsi.h"
 
 //  forward declarations
 //////////////////////////////////////////////////////////////////////////////////
@@ -262,4 +263,25 @@ inline VkDeviceMemory initMemory(
 
 	return memory;
 }
+
+//Kill all vulkan handles
+void cleanupVulkan(VkDevice device,
+    VkInstance instance,
+    vector<VkSemaphore>& renderSs,
+    VkPipeline pipeline,
+    vector<VkFramebuffer>& framebuffers,
+    vector<VkImageView>& imageViews,
+    VkSwapchainKHR swapchain,
+    vector<VkSemaphore>& imageSs,
+    vector<VkFence>& fences,
+    VkCommandPool commandPool,
+    VkDeviceMemory vertexBufferMemory,
+    VkBuffer vertexBuffer,
+    VkPipelineLayout pipelineLayout,
+    VkShaderModule fragmentShader,
+    VkShaderModule vertexShader,
+    VkRenderPass renderPass,
+    VkSurfaceKHR surface,
+    PlatformWindow window
+);
 #endif //COMMON_VULKAN_IMPL_H

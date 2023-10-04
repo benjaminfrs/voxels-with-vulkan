@@ -12,7 +12,6 @@
 #include "ErrorHandling.h"
 #include "ExtensionLoader.h"
 #include "Vertex.h"
-#include "Wsi.h"
 
 using std::exception;
 using std::string;
@@ -163,6 +162,45 @@ void killInstance( const VkInstance instance ){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void cleanupVulkan(VkDevice device,
+    VkInstance instance,
+    vector<VkSemaphore>& renderSs,
+    VkPipeline pipeline,
+    vector<VkFramebuffer>& framebuffers,
+    vector<VkImageView>& imageViews,
+    VkSwapchainKHR swapchain,
+    vector<VkSemaphore>& imageSs,
+    vector<VkFence>& fences,
+    VkCommandPool commandPool,
+    VkDeviceMemory vertexBufferMemory,
+    VkBuffer vertexBuffer,
+    VkPipelineLayout pipelineLayout,
+    VkShaderModule fragmentShader,
+    VkShaderModule vertexShader,
+    VkRenderPass renderPass,
+    VkSurfaceKHR surface,
+    PlatformWindow window
+){
+  killSemaphores(device, renderSs);
+  killPipeline(device, pipeline);
+  killFramebuffers(device, framebuffers);
+  killSwapchainImageViews(device, imageViews);
+  killSwapchain(device, swapchain);
+  killSemaphores(device, imageSs);
+  killFences(device, fences);
+  killCommandPool(device, commandPool);
+  killMemory(device, vertexBufferMemory);
+  killBuffer(device, vertexBuffer);
+  killPipelineLayout(device, pipelineLayout);
+  killShaderModule(device, fragmentShader);
+  killShaderModule(device, vertexShader);
+  killRenderPass(device, renderPass);
+  killDevice(device);
+  killSurface(instance, surface);
+  killWindow(window);
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool isPresentationSupported( const VkPhysicalDevice physDevice, const uint32_t queueFamily, const VkSurfaceKHR surface ){
 	VkBool32 supported;
 	const VkResult errorCode = vkGetPhysicalDeviceSurfaceSupportKHR( physDevice, queueFamily, surface, &supported ); RESULT_HANDLER( errorCode, "vkGetPhysicalDeviceSurfaceSupportKHR" );
