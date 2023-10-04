@@ -23,8 +23,9 @@
 **/*.spv.inl
 
 #output
+/*.a
 /*.exe
-/HelloTriangle
+/HelloVoxel
 /build/
 /build32/
 /build64/
